@@ -5,10 +5,6 @@ import org.springframework.context.annotation.Configuration;
 
 import com.tictactoe.kata.game.player.Player;
 
-/**
- * This config class creates two instances of player class
- *
- */
 @Configuration
 public class TicTacToeKataConfig {
 	

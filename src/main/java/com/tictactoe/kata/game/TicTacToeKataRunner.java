@@ -10,15 +10,6 @@ import org.springframework.stereotype.Component;
 
 import com.tictactoe.kata.game.player.Player;
 
-import static com.tictactoe.kata.game.util.Constants.ENTER_ROW;
-import static com.tictactoe.kata.game.util.Constants.ENTER_COLUMN;
-import static com.tictactoe.kata.game.util.Constants.POSITION_OCCUPIED;
-import static com.tictactoe.kata.game.util.Constants.INCORRECT_ROW_COL_VALUE;
-
-/**
- * Class that allows user to input from command line for both player and outcome
- * of game displayed on command line
- */
 @Component
 public class TicTacToeKataRunner implements CommandLineRunner {
 
@@ -32,12 +23,73 @@ public class TicTacToeKataRunner implements CommandLineRunner {
 
 	@Autowired
 	private TicTacToeGameProcessor ticTacToeGame;
+	
+	int count;
 
 	@Override
 	public void run(String... args) throws IOException {
 		
 		String newline = System.getProperty("line.separator");
 		
+		printGameRules();
+		
+		try (Scanner inputReader = new Scanner(System.in)) {		
+			printGameStartState(newline, inputReader);
+			
+			boolean isFirst = false;
+			System.out.println(newline);
+			
+			isFirst = getFirstPlayer(newline, isFirst);
+			
+			if (isFirst) {
+				do {
+					if(!playerMove(player1, inputReader, 1)) {
+						break;
+					}
+					
+					if(!playerMove(player2, inputReader, 2)) {
+						break;
+					}
+				} while (true);					
+			} else {
+				do {
+					if(!playerMove(player2, inputReader, 1)) {
+						break;
+					}
+					
+					if(!playerMove(player1, inputReader, 2)) {
+						break;
+					}			
+				} while (true);	
+			}	
+			
+			printFinalOutcome(newline);			
+		} catch (Exception ex) {
+			System.out.format("Fatal Exception Occurred, Please restart game Error - %s", ex.getMessage());
+		}
+	}
+
+	private void printFinalOutcome(String newline) {
+		System.out.println("\nFinal Game Outcome Reached ");
+		printGameBoardState();
+		System.out.println(newline);	
+		
+		GameStateEnum winner = ticTacToeGame.getWinner();
+		if (ticTacToeGame.isFinished() && winner != GameStateEnum.BLANK) {	
+			if (winner == player1.getShape()) {
+				System.out.format("TIC TAC TOE GAME WINNER IS %s", player1.getPlayerName());
+			}
+			
+			if (winner == player2.getShape()) {
+				System.out.format("TIC TAC TOE GAME WINNER IS %s", player2.getPlayerName());
+			}
+		} else {
+			System.out.println("TIC TAC TOE GAME IS DRAWN");
+		}
+		System.out.println(newline);
+	}
+
+	private void printGameRules() {
 		StringBuilder gameRules = new StringBuilder();
 		gameRules.append("RULES OF TIC TAC TOE GAME \n");
 		gameRules.append(" 1) X always goes first. \n");
@@ -50,191 +102,92 @@ public class TicTacToeKataRunner implements CommandLineRunner {
 		gameRules.append(" 8) Please enter row and column position values in integer values less than 2. \n");
 		
 		System.out.println(gameRules.toString());
-		
-		try (Scanner inputReader = new Scanner(System.in)) {		
-			do {				
-				System.out.println("Please enter first player name : ");
-				String playerName1 = inputReader.nextLine();
-				player1.setPlayerName(playerName1);
-				
-				System.out.println(newline);
-				
-				System.out.println("Please enter second player name : ");
-				String playerName2 = inputReader.nextLine();
-				player2.setPlayerName(playerName2);					
-				
-				System.out.println("Assigning shapes O/X to players based on toss !!");
-				if (Math.random() < 0.5) {
-					System.out.println("O assigned to player 1 & X assigned to player 2");
-					player1.setShape(GameStateEnum.CIRCLE);
-					player2.setShape(GameStateEnum.CROSS);
-				} else {
-					System.out.println("X assigned to player 1 & O assigned to player 2");
-					player1.setShape(GameStateEnum.CROSS);
-					player2.setShape(GameStateEnum.CIRCLE);
-				}
-				
-				if (playerName1.trim().equalsIgnoreCase(playerName2.trim())) {
-					System.out.println("Both player names are same, please enter two different players!!!");
-				} else {								
-					break;
-				}	
-			} while (true);		
-			
-			System.out.println("\nTIC TAC TOE GAME STARTED \nInitial State of The Game \n");	
-			printGameBoardState();
-			
-			boolean isFirst = false;
-			boolean isMarked = false;
-			int row = 0;
-			int col = 0;
-			int count = 0;
-			System.out.println(newline);
-			
-			if (player1.getShape() == GameStateEnum.CROSS) {
-				System.out.println(player1.getPlayerName() + " will go first due to shape X assignment in toss");
-				isFirst = true;
-			} else {
-				System.out.println(player2.getPlayerName() + " will go first due to shape X assignment in toss");			
-			}
-			System.out.println(newline);
-			
-			if (isFirst) {
-				do {
-					do {
-						System.out.println(player1.getPlayerName() + ENTER_ROW);
-						row = inputReader.nextInt();
-						System.out.println(player1.getPlayerName() + ENTER_COLUMN);
-						col = inputReader.nextInt();
-					
-						if (row <=2 && col <= 2) {
-							isMarked = ticTacToeGame.markCross(row, col);
-							count++;
-							
-							if (!isMarked) {
-								System.out.println(POSITION_OCCUPIED);
-							} else {
-								break;
-							}
-						} else {
-							System.out.println(INCORRECT_ROW_COL_VALUE);
-						}
-						
-					} while (true);						
-					
-					if (ticTacToeGame.isFinished() || count == 8) {						
-						break;
-					}
-						
-					System.out.println(newline);					
-					do {
-						System.out.println(player2.getPlayerName() + ENTER_ROW);
-						row = inputReader.nextInt();
-						System.out.println(player2.getPlayerName() + ENTER_COLUMN);
-						col = inputReader.nextInt();
-						
-						if (row <=2 && col <= 2) {
-							isMarked= ticTacToeGame.markCircle(row, col);
-							count++;
-							
-							if (!isMarked) {
-								System.out.println(POSITION_OCCUPIED);
-							} else {
-								break;
-							}				
-						} else {
-							System.out.println(INCORRECT_ROW_COL_VALUE);
-						}												
-					} while (true);					
-					
-					if (ticTacToeGame.isFinished() || count == 8) {						
-						break;
-					}	
-					
-					System.out.println("\n Current Status - ");
-					printGameBoardState();
-					System.out.println(newline);
-					
-				} while (true);					
-			} else {
-				do {
-					do {
-						System.out.println(player2.getPlayerName() + ENTER_ROW);
-						row = inputReader.nextInt();
-						System.out.println(player2.getPlayerName() + ENTER_COLUMN);
-						col = inputReader.nextInt();
-						
-						if (row <=2 && col <= 2) {
-							isMarked= ticTacToeGame.markCross(row, col);
-							count++;
-							
-							if (!isMarked) {
-								System.out.println(POSITION_OCCUPIED);
-							} else {
-								break;
-							}		
-						} else {
-							System.out.println(INCORRECT_ROW_COL_VALUE);
-						}
-									
-					} while (true);						
-					
-					if (ticTacToeGame.isFinished() || count == 8) {						
-						break;
-					}
-						
-					System.out.println(newline);
-					
-					do {
-						System.out.println(player1.getPlayerName() + ENTER_ROW);
-						row = inputReader.nextInt();
-						System.out.println(player1.getPlayerName() + ENTER_COLUMN);
-						col = inputReader.nextInt();
-						isMarked= ticTacToeGame.markCircle(row, col);
-						count++;
-						
-						if (row <= 2 && col <= 2) {
-							if (!isMarked) {
-								System.out.println(POSITION_OCCUPIED);
-							} else {
-								break;
-							}			
-						} else {
-							System.out.println(INCORRECT_ROW_COL_VALUE);
-						}													
-					} while (true);					
-					
-					if (ticTacToeGame.isFinished() || count == 8) {						
-						break;
-					}	
-					
-					System.out.println("\nCurrent Status - ");
-					printGameBoardState();
-					System.out.println(newline);					
-				} while (true);	
-			}	
-			
-			System.out.println("\nFinal Game Outcome Reached :: ");
-			printGameBoardState();
-			System.out.println(newline);	
-			if (ticTacToeGame.isFinished()) {
-				GameStateEnum winner = ticTacToeGame.getWinner();
-				if (winner == player1.getShape()) {
-					System.out.format("TIC TAC TOE GAME WINNER IS %s", player1.getPlayerName());
-				}
-				
-				if (winner == player2.getShape()) {
-					System.out.format("TIC TAC TOE GAME WINNER IS %s", player2.getPlayerName());
-				}
-				
-				if (winner == GameStateEnum.BLANK) {
-					System.out.println("TIC TAC TOE GAME IS DRAWN");
-				}
-			}
-			System.out.println(newline);			
-		} catch (Exception ex) {
-			System.out.format("Fatal Exception Occurred, Please restart game Error - %s", ex.getMessage());
+	}
+
+	private boolean getFirstPlayer(String newline, boolean isFirst) {
+		if (player1.getShape() == GameStateEnum.CROSS) {
+			System.out.println(player1.getPlayerName() + " will go first due to shape X assignment in toss");
+			isFirst = true;
+		} else {
+			System.out.println(player2.getPlayerName() + " will go first due to shape X assignment in toss");			
 		}
+		System.out.println(newline);
+		return isFirst;
+	}
+
+	private boolean playerMove(Player player, Scanner inputReader, int playerMove) {
+		String newline = System.getProperty("line.separator");
+		boolean isMarked;
+		int row;
+		int col;
+		do {
+			System.out.println(player.getPlayerName() + " : Please enter Row position");
+			row = inputReader.nextInt();
+			System.out.println(player.getPlayerName() + " : Please enter Column position");
+			col = inputReader.nextInt();
+			
+			if (row <=2 && col <= 2) {
+				isMarked = drawMark(row, col, playerMove);
+				count++;
+				
+				if (!isMarked) {
+					System.out.println("\n Row & Column position is already occupied, Please re-enter.. \n");
+				} else {
+					break;
+				}				
+			} else {
+				System.out.println("\n Incorrect Row & Column values provided, Please re-enter \n");
+			}												
+		} while (true);
+		
+		if (ticTacToeGame.isFinished() || count == 9) {						
+			return false;
+		}
+		
+		System.out.println("\n Current Status - ");
+		printGameBoardState();
+		System.out.println(newline);
+		return true;
+	}
+
+	private boolean drawMark(int row, int col, int player) {
+		boolean isMarked;
+		isMarked= (player == 1) ? ticTacToeGame.markCross(row, col) : ticTacToeGame.markCircle(row, col);
+		return isMarked;
+	}
+	
+	private void printGameStartState(String newline, Scanner inputReader) {
+		do {				
+			System.out.println("Please enter first player name : ");
+			String playerName1 = inputReader.nextLine();
+			player1.setPlayerName(playerName1);
+			
+			System.out.println(newline);
+			
+			System.out.println("Please enter second player name : ");
+			String playerName2 = inputReader.nextLine();
+			player2.setPlayerName(playerName2);					
+			
+			System.out.println("Assigning shapes O/X to players based on toss !!");
+			if (Math.random() < 0.5) {
+				System.out.println("O assigned to player 1 & X assigned to player 2");
+				player1.setShape(GameStateEnum.CIRCLE);
+				player2.setShape(GameStateEnum.CROSS);
+			} else {
+				System.out.println("X assigned to player 1 & O assigned to player 2");
+				player1.setShape(GameStateEnum.CROSS);
+				player2.setShape(GameStateEnum.CIRCLE);
+			}
+			
+			if (playerName1.trim().equalsIgnoreCase(playerName2.trim())) {
+				System.out.println("Both player names are same, please enter two different players!!!");
+			} else {								
+				break;
+			}	
+		} while (true);		
+		
+		System.out.println("\nTIC TAC TOE GAME STARTED \nInitial State of The Game \n");	
+		printGameBoardState();
 	}		
 	
 	private void printGameBoardState() {

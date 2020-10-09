@@ -7,17 +7,16 @@ import org.junit.Test;
 
 import com.tictactoe.kata.game.GameStateEnum;
 import com.tictactoe.kata.game.TicTacToeGameProcessor;
+import com.tictactoe.kata.game.TicTacToeKataRunner;
 
-/**
- * Tests for code
- *
- */
 public class TicTacToeKataApplicationTests {
 	private TicTacToeGameProcessor ticTacToe;
+	private TicTacToeKataRunner ticTacToeKataRunner;
 
 	@Before
 	public void setUp() {
 		ticTacToe = new TicTacToeGameProcessor();
+		ticTacToeKataRunner= new TicTacToeKataRunner();
 	}
 
 	@Test
